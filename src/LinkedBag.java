@@ -32,7 +32,7 @@ public class LinkedBag<T> implements BagInterface<T> {
 
     @Override
     /**
-     * add a object to the array
+     * add a object to the linked data
      * @param newEntry pass in the value
      * @return true if the addtion successful, or false if not
      */
@@ -48,7 +48,7 @@ public class LinkedBag<T> implements BagInterface<T> {
 
     @Override
     /**
-     * remove the first object from the array
+     * remove the first object from the linked data
      * 
      * @return the object that got romoved
      */
@@ -122,8 +122,8 @@ public class LinkedBag<T> implements BagInterface<T> {
     /**
      * to check if the number does exist in the array
      * 
-     * @param newEntry pass in to check if the array has that number
-     * @return true if the array does contain that number, or false if the array
+     * @param newEntry pass in to check if the linked data has that number
+     * @return true if the linked data does contain that number, or false if the linked data
      *         does not contain that number
      */
     public boolean contain(T newEntry){
