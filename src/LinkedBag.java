@@ -1,55 +1,24 @@
-public class ResizeableArrayBag<T> implements BagInterface<T> {
-    private T[] array;
-    private static final int INITIAL_CONPACITY = 10;
-    private static final int MAX_CONPACITY = 1000;
-    private boolean integrityOK = false;
-    private int counts;
+public class LinkedBag<T> implements BagInterface<T> {
+    private Node firstNode;
+    private int numberOfEntries;
 
-    private void resize() {
-        @SuppressWarnings("unchecked")
-        T[] temp = (T[]) new Object[INITIAL_CONPACITY * 2];
-        int j = 0;
-
-        for (int i = 0; i < counts; i++) {
-            if (j < counts) {
-                temp[i] = array[j];
-                j++;
-            }
-        }
-        array = temp;
-    }
     /**
      * Initialize constructor
      */
-    public ResizeableArrayBag(){
-        if(INITIAL_CONPACITY <= MAX_CONPACITY){
-            @SuppressWarnings("unchecked")
-            T[] tempBag = (T[])new Object[INITIAL_CONPACITY];
-            counts = 0;
-            array = tempBag;
-            integrityOK = true;
-        }
-        else
-            throw new IllegalStateException("THE CAPACITY IS EXCEED THE LITMID;");
+    public LinkedBag(){
+        firstNode = new Node(null);
+        numberOfEntries = 0;
         
     }
-    
+
     @Override
     /**
      * Gets the current number of entries in this bag.
      * @return The integer number of entries currently in the bag.
      */
     public int getCurrentSize(){
-        return counts;
+        return numberOfEntries;
         
-    }
-
-    /**
-     * Sees whether this bag is full
-     * @return True if the bag is full
-     */
-    public boolean isFull(){
-        return array.length == counts;
     }
 
     @Override
@@ -58,7 +27,7 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      * @return True if the bag is empty
      */
     public boolean isEmpty(){
-        return counts == 0;
+        return numberOfEntries == 0;
     }
 
     @Override
@@ -68,25 +37,13 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      * @return true if the addtion successful, or false if not
      */
     public boolean add(T newEntry){
-        if(isEmpty()){
-            array[counts] = newEntry;
-            counts++;
-            return true;
-        }
-        else
-            if (isFull()){
-                resize();
-                array[counts] = newEntry;
-                counts++;
-                return true;
-            }
-        else
-        {
-            array[counts] = newEntry;
-            counts++;
-            return true;
-        }
-            
+        Node newNode = new Node(newEntry);
+        newNode.next = firstNode;
+
+        firstNode = newNode;
+        numberOfEntries++;
+
+        return true;
     }
 
     @Override
@@ -96,12 +53,15 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      * @return the object that got romoved
      */
     public T remove(){
-        T temp = array[0];
-        
-        array[0] = array[counts - 1];
-        array[counts - 1] = null;
+        T result = null;
 
-        return temp;
+        if(!isEmpty()){
+            result = firstNode.getData();
+            firstNode = firstNode.getNextNode();
+            numberOfEntries--;
+        }
+
+        return result;
     }
 
     @Override
@@ -110,21 +70,21 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      * @param newEntry pass in the object to remove
      * @return the object that got romoved
      */
-    public boolean remove(T newEntry){
-        T temp = null;
-        boolean result = false;
+    public boolean remove(T newEntry) {
+       boolean result = false;
+       Node nodeN = getReferenceTo(newEntry);
 
-        for(int i = 0; i < counts; i++){
-            if(!isEmpty() && getFrequencyOf(newEntry) >= 1){
-                if(newEntry.equals(array[i])){
-                    temp = array[i];
-                    array[i] = array[counts - 1];
-                    array[counts - 1] = null; 
-                    result = true;
-                }
-            }
-        }
-        return result;
+       if(nodeN != null){
+           nodeN.setData(firstNode.getData());
+
+           firstNode = firstNode.getNextNode();
+
+           numberOfEntries--;
+
+           result = true;
+       }
+
+       return result;
     }
 
     @Override
@@ -145,13 +105,17 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      */
     public int getFrequencyOf(T newEntry){
         int count = 0;
+        int frequency = 0;
+        Node currentEntry = firstNode;
         
-        for(int i = 0; i < counts; i++){
-            if(newEntry.equals(array[i])){
-                count++;
+        while((count < numberOfEntries) && (currentEntry != null)){
+            if(newEntry.equals(currentEntry.getData())){
+                frequency++;
             }
+            currentEntry = currentEntry.getNextNode();
+            count++;
         }
-        return count;
+        return frequency;
     }
 
     @Override
@@ -163,12 +127,19 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      *         does not contain that number
      */
     public boolean contain(T newEntry){
-        for (int i = 0; i < counts; i++){
-            if(newEntry.equals(array[i])){
-                return true;
+        boolean found = false;
+        Node currentEntry = firstNode;
+
+        while(!found && currentEntry != null){
+            if(newEntry.equals(currentEntry.getData())){
+                found = true;
+            }
+            else{
+                currentEntry = currentEntry.getNextNode();
             }
         }
-        return false;
+        
+        return found;
     }
 
     @Override
@@ -178,10 +149,16 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      */
     public T[] toArray(){
         @SuppressWarnings("unchecked")
-        T[] result = (T[])new Object[counts];
-        for(int i = 0; i < counts; i++){
-            result[i] = array[i];
+        T[] result = (T[])new Object[numberOfEntries];
+        int j = 0;
+        Node currentEntry = firstNode;
+
+        while((j < numberOfEntries) && (currentEntry != null)){
+            result[j] = (T) currentEntry.getData();
+            j++;
+            currentEntry = currentEntry.getNextNode();
         }
+
         return result;
     }
 
@@ -192,13 +169,13 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      * @return a new object that contain the data from the class
      */
 	public BagInterface<T> union(BagInterface<T> others) {
-        ResizeableArrayBag<T> newBag = new ResizeableArrayBag<T>();
+        LinkedBag<T> newBag = new LinkedBag<T>();
         T[] tempArray1 = this.toArray();
-        T[] tempArray = ((ResizeableArrayBag<T>)others).toArray();
-        int totalEntries = counts + ((ResizeableArrayBag<T>)others).getCurrentSize();
+        T[] tempArray = ((LinkedBag<T>)others).toArray();
+        int totalEntries = numberOfEntries + ((LinkedBag<T>)others).getCurrentSize();
         int j = 0;
 
-        if(others instanceof ResizeableArrayBag){
+        if(others instanceof LinkedBag){
             for(int i = 0; i < totalEntries; i++){
                 if(i < tempArray1.length){
                     newBag.add(tempArray1[i]);
@@ -209,7 +186,7 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
                 }
             }
         }
-        
+
         return newBag;
     }
 
@@ -220,14 +197,14 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      * @return a new object of the same class that contain the instersect data.
      */
     public BagInterface<T> intersect(BagInterface<T> others) {
-        boolean[] counter = new boolean[((ResizeableArrayBag<T>) others).getCurrentSize()];
-        ResizeableArrayBag<T> newBag = new ResizeableArrayBag<T>();
+        boolean[] counter = new boolean[((LinkedBag<T>) others).getCurrentSize()];
+        LinkedBag<T> newBag = new LinkedBag<T>();
         T[] tempBag1 = this.toArray();
-        T[] tempBag2 = others.toArray();
+        T[] tempBag2 = ((LinkedBag<T>) others).toArray();
 
-        if(others instanceof ResizeableArrayBag){
-            for (int i = 0; i < counts; i++ ){
-                for(int j = 0; j < (((ResizeableArrayBag<T>) others).getCurrentSize()); j++){
+        if(others instanceof LinkedBag){
+            for (int i = 0; i < numberOfEntries; i++ ){
+                for(int j = 0; j < (((LinkedBag<T>) others).getCurrentSize()); j++){
                     if(tempBag1[i].equals(tempBag2[j]) && counter[j] == false){
                         newBag.add(tempBag1[i]);
                         counter[j] = true;
@@ -238,6 +215,8 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
         }
         
         return newBag;
+
+
     }
 
     @Override
@@ -247,16 +226,16 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
      * @return a new object of the same class that contain the difference data.
      */
     public BagInterface<T> difference(BagInterface<T> others) {
-        boolean[] counter = new boolean[((ResizeableArrayBag<T>) others).getCurrentSize()];
-        ResizeableArrayBag<T> newBag = new ResizeableArrayBag<T>();
+        boolean[] counter = new boolean[((LinkedBag<T>) others).getCurrentSize()];
+        LinkedBag<T> newBag = new LinkedBag<T>();
         T[] tempBag1 = this.toArray();
-        T[] tempBag2 = others.toArray();
+        T[] tempBag2 = ((LinkedBag<T>) others).toArray();
         boolean switchCheck;
 
-        if(others instanceof ResizeableArrayBag){
-            for (int i = 0; i < counts; i++ ){
+        if(others instanceof LinkedBag){
+            for (int i = 0; i < numberOfEntries; i++ ){
                 switchCheck = true;
-                for(int j = 0; j < ((ResizeableArrayBag<T>) others).getCurrentSize(); j++){
+                for(int j = 0; j < ((LinkedBag<T>) others).getCurrentSize(); j++){
                     if(tempBag1[i].equals(tempBag2[j]) && counter[j] == false){
                         counter[j] = true;
                         switchCheck = false;
@@ -276,5 +255,49 @@ public class ResizeableArrayBag<T> implements BagInterface<T> {
        
     }
 
+    public class Node{
+        private T data;
+        private Node next;
+
+        private Node(T data){
+            this(data, null);
+        }
+
+        private Node(T data, Node nextNode){
+            this.data = data;
+            this.next = nextNode;
+        }
+
+        private T getData(){
+            return data;
+        }
+
+        private void setData(T newData){
+            data = newData;
+        }
+
+        private Node getNextNode(){
+            return next;
+        }
+
+        private void setNextNode(Node nextNode){
+            next = nextNode;
+        }
+    }
+
+    private Node getReferenceTo(T anEntry){
+        boolean found = false;
+        Node currentNode = firstNode;
+
+        while(!found && (currentNode != null)){
+            if(anEntry.equals(currentNode.getData())){
+                found = true;
+            }
+            else
+                currentNode = currentNode.getNextNode();
+        }
+
+        return currentNode;
+    }
     
 }
